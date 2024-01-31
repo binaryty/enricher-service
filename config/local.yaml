@@ -5,6 +5,10 @@ db_user: "postgres"
 db_pass: "postgres"
 db_name: "people_db"
 db_ssl_mode: "disable"
+api:
+  age: "https://api.agify.io/"
+  gender: "https://api.genderize.io/"
+  nationality: "https://api.nationalize.io/"
 http_server:
   address: "localhost:8082"
   timeout: 4s

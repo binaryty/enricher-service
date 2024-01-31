@@ -16,13 +16,20 @@ type Config struct {
 	DBPass     string     `yaml:"db_pass" env-required:"true"`
 	DBName     string     `yaml:"db_name" env-default:"people_db"`
 	DBSSLMode  string     `yaml:"db_ssl_mode" env-default:"disable"`
-	HTTPServer HTTPServer `json:"http_server"`
+	API        API        `yaml:"api"`
+	HTTPServer HTTPServer `yaml:"http_server"`
 }
 
 type HTTPServer struct {
 	Address     string        `yaml:"address" env-default:"localhost:8080"`
 	Timeout     time.Duration `yaml:"timeout" env-default:"4s"`
 	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
+}
+
+type API struct {
+	Age         string `yaml:"age"`
+	Gender      string `yaml:"gender"`
+	Nationality string `yaml:"nationality"`
 }
 
 // MustLoad load config and panic if not set.

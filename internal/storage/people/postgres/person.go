@@ -35,7 +35,7 @@ func New(cfg ConfigProvider) (*Storage, error) {
 }
 
 // Create creates person in storage and return id of last inserted record.
-func (s *Storage) Create(ctx context.Context, person *models.Person) (int64, error) {
+func (s *Storage) Create(ctx context.Context, person models.AddPersonRequest) (int64, error) {
 	const op = "storage.postgres.Create"
 
 	query := `INSERT INTO persons (name, surname, patronymic, age, gender, nationality)
@@ -79,8 +79,6 @@ func (s *Storage) SelectByID(ctx context.Context, personID int64) (*models.Perso
 
 // Update updates person.
 func (s *Storage) Update(ctx context.Context, person *models.Person) error {
-	const op = "storage.postgres.Update"
-
 	query := `UPDATE persons 
 SET name = $1,
     surname = $2,
@@ -126,7 +124,7 @@ func (s *Storage) SelectAll(ctx context.Context, limit int, offset int) ([]model
 	for rows.Next() {
 		var person models.Person
 		if err := rows.StructScan(&person); err != nil {
-			return nil, fmt.Errorf("%s: %w", err)
+			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 
 		persons = append(persons, person)
@@ -137,8 +135,6 @@ func (s *Storage) SelectAll(ctx context.Context, limit int, offset int) ([]model
 
 // DeleteByID delete person from storage by ID.
 func (s *Storage) DeleteByID(ctx context.Context, personID int64) error {
-	const op = "storage.postgres.DeleteByID"
-
 	query := `DELETE FROM persons WHERE id = $1`
 
 	_, err := s.db.ExecContext(ctx, query, personID)

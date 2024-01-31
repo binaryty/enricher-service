@@ -9,3 +9,9 @@ type Person struct {
 	Gender      string `db:"gender"`
 	Nationality string `db:"nationality"`
 }
+
+type RawPerson struct {
+	Name       string `json:"name" db:"name"`
+	Surname    string `json:"surname" db:"surname"`
+	Patronymic string `json:"patronymic" db:"patronymic"`
+}

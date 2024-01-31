@@ -23,7 +23,7 @@ type Enricher struct {
 	client         *http.Client
 }
 
-// New ...
+// New create a new instance of Enricher.
 func New(cfg *config.Config) *Enricher {
 	return &Enricher{
 		ageAPI:         cfg.API.Age,
@@ -33,8 +33,8 @@ func New(cfg *config.Config) *Enricher {
 	}
 }
 
-// Process ...
-func (e Enricher) Process(ctx context.Context, rawData models.RawPerson) (*models.AddPersonRequest, error) {
+// Process processing enrich raw data.
+func (e *Enricher) Process(ctx context.Context, rawData models.RawPerson) (*models.AddPersonRequest, error) {
 
 	ageResp, err := e.handleAge(ctx, rawData.Name)
 	if err != nil {
@@ -61,8 +61,8 @@ func (e Enricher) Process(ctx context.Context, rawData models.RawPerson) (*model
 	}, nil
 }
 
-// handleAge ...
-func (e Enricher) handleAge(ctx context.Context, name string) (*models.AgeResponse, error) {
+// handleAge get age from public API.
+func (e *Enricher) handleAge(ctx context.Context, name string) (*models.AgeResponse, error) {
 	const op = "services.enricher.handleAge"
 
 	uri := fmt.Sprintf("%s?name=%s", e.ageAPI, name)
@@ -91,8 +91,8 @@ func (e Enricher) handleAge(ctx context.Context, name string) (*models.AgeRespon
 	return &ageResp, nil
 }
 
-// handleGender ...
-func (e Enricher) handleGender(ctx context.Context, name string) (*models.GenderResponse, error) {
+// handleGender get gender from public API.
+func (e *Enricher) handleGender(ctx context.Context, name string) (*models.GenderResponse, error) {
 	const op = "services.enricher.handleGender"
 
 	uri := fmt.Sprintf("%s?name=%s", e.genderAPI, name)
@@ -121,8 +121,8 @@ func (e Enricher) handleGender(ctx context.Context, name string) (*models.Gender
 	return &genderResp, nil
 }
 
-// handleNationality ...
-func (e Enricher) handleNationality(ctx context.Context, name string) (*models.NationalityResponse, error) {
+// handleNationality get nationality from public API.
+func (e *Enricher) handleNationality(ctx context.Context, name string) (*models.NationalityResponse, error) {
 	const op = "services.enricher.handleNationality"
 
 	uri := fmt.Sprintf("%s?name=%s", e.nationalityAPI, name)

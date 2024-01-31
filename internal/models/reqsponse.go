@@ -1,10 +1,5 @@
 package models
 
-const (
-	Male   = "male"
-	Female = "female"
-)
-
 type AddPersonRequest struct {
 	Name        string `json:"name" db:"name"`
 	Surname     string `json:"surname" db:"surname"`

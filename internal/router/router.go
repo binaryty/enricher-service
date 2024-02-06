@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/binaryty/enricher-service/internal/models"
 	"github.com/binaryty/enricher-service/internal/response"
-	"github.com/binaryty/enricher-service/internal/storage/people/postgres"
+	"github.com/binaryty/enricher-service/internal/storage"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
@@ -60,7 +60,7 @@ func (r *Router) SelectByID(c echo.Context) error {
 
 	person, err := r.service.SelectByID(c.Request().Context(), int64(id))
 	if err != nil {
-		if errors.Is(err, postgres.ErrNotFound) {
+		if errors.Is(err, storage.ErrNotFound) {
 			return response.NotFound(c, err)
 		}
 		return response.InternalServerError(c, err)
@@ -82,7 +82,18 @@ func (r *Router) SelectAll(ctx context.Context, params models.Params) ([]models.
 }
 
 // DeleteByID ...
-func (r *Router) DeleteByID(ctx context.Context, id int64) error {
-	// TODO: implement me
-	panic("implement me")
+func (r *Router) DeleteByID(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return response.BadRequest(c, err)
+	}
+	if err := r.service.DeleteByID(c.Request().Context(), int64(id)); err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return response.NotFound(c, err)
+		}
+
+		return response.InternalServerError(c, err)
+	}
+
+	return c.JSON(http.StatusNoContent, nil)
 }

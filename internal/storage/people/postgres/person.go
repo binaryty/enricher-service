@@ -10,6 +10,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var (
+	ErrNotFound = errors.New("person not found")
+)
+
 // ConfigProvider an interface implements config.
 type ConfigProvider interface {
 	MakePGURL() string
@@ -35,7 +39,7 @@ func New(cfg ConfigProvider) (*Storage, error) {
 }
 
 // Create creates person in storage and return id of last inserted record.
-func (s *Storage) Create(ctx context.Context, person models.AddPersonRequest) (int64, error) {
+func (s *Storage) Create(ctx context.Context, person models.Person) (int64, error) {
 	const op = "storage.postgres.Create"
 
 	query := `INSERT INTO persons (name, surname, patronymic, age, gender, nationality)
@@ -69,7 +73,7 @@ func (s *Storage) SelectByID(ctx context.Context, personID int64) (*models.Perso
 		personID,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("%s: %w", op, err)
+			return nil, ErrNotFound
 		}
 
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -104,15 +108,15 @@ WHERE id = $7
 }
 
 // SelectAll returns slice of persons.
-func (s *Storage) SelectAll(ctx context.Context, limit int, offset int) ([]models.Person, error) {
+func (s *Storage) SelectAll(ctx context.Context, params models.Params) ([]models.Person, error) {
 	const op = "storage.postgres.SelectAll"
 
 	query := `SELECT * FROM persons ORDER BY id LIMIT $1 OFFSET $2`
 
-	rows, err := s.db.QueryxContext(ctx, query, limit, offset)
+	rows, err := s.db.QueryxContext(ctx, query, params.Limit, params.Offset)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("%s: %w", op, err)
+			return nil, ErrNotFound
 		}
 
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -138,6 +142,9 @@ func (s *Storage) DeleteByID(ctx context.Context, personID int64) error {
 	query := `DELETE FROM persons WHERE id = $1`
 
 	_, err := s.db.ExecContext(ctx, query, personID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrNotFound
+	}
 
 	return err
 }

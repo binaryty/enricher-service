@@ -1,4 +1,4 @@
-package postgres
+package storage
 
 import (
 	"context"
@@ -6,12 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/binaryty/enricher-service/internal/models"
+	"github.com/binaryty/enricher-service/internal/storage"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-)
-
-var (
-	ErrNotFound = errors.New("person not found")
 )
 
 // ConfigProvider an interface implements config.
@@ -73,7 +70,7 @@ func (s *Storage) SelectByID(ctx context.Context, personID int64) (*models.Perso
 		personID,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, storage.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -116,7 +113,7 @@ func (s *Storage) SelectAll(ctx context.Context, params models.Params) ([]models
 	rows, err := s.db.QueryxContext(ctx, query, params.Limit, params.Offset)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, storage.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -143,7 +140,7 @@ func (s *Storage) DeleteByID(ctx context.Context, personID int64) error {
 
 	_, err := s.db.ExecContext(ctx, query, personID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return ErrNotFound
+		return storage.ErrNotFound
 	}
 
 	return err

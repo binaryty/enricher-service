@@ -21,14 +21,12 @@ type PeopleService interface {
 }
 
 type Router struct {
-	Echo    *echo.Echo
 	service PeopleService
 }
 
 // New returns a new instance of Router.
-func New(echo *echo.Echo, service PeopleService) *Router {
+func New(service PeopleService) *Router {
 	return &Router{
-		Echo:    echo,
 		service: service,
 	}
 }
@@ -127,12 +125,12 @@ func (r *Router) DeleteByID(c echo.Context) error {
 	return c.JSON(http.StatusNoContent, nil)
 }
 
-func (r *Router) Route() {
-	r.Echo.Use(middleware.Recover())
+func (r *Router) Route(e *echo.Echo) {
+	e.Use(middleware.Recover())
 
-	r.Echo.POST("/people", r.AddPerson)
-	r.Echo.GET("people", r.SelectAll)
-	r.Echo.GET("/people/:id", r.SelectByID)
-	r.Echo.DELETE("/people/:id", r.DeleteByID)
-	r.Echo.PUT("/people", r.Update)
+	e.POST("/people", r.AddPerson)
+	e.GET("people", r.SelectAll)
+	e.GET("/people/:id", r.SelectByID)
+	e.DELETE("/people/:id", r.DeleteByID)
+	e.PUT("/people", r.Update)
 }

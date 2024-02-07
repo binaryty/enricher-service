@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/binaryty/enricher-service/internal/config"
 	"github.com/binaryty/enricher-service/internal/router"
-	enricher "github.com/binaryty/enricher-service/internal/services/enricher"
+	"github.com/binaryty/enricher-service/internal/services/enricher"
 	services "github.com/binaryty/enricher-service/internal/services/people"
 	storage "github.com/binaryty/enricher-service/internal/storage/people/postgres"
 	"github.com/labstack/echo/v4"
@@ -12,13 +12,13 @@ import (
 )
 
 type App struct {
-	log     *slog.Logger
-	service *services.Service
-	router  *router.Router
+	l *slog.Logger
+	e *echo.Echo
+	r *router.Router
 }
 
 func New(cfg *config.Config, log *slog.Logger) *App {
-	a := App{}
+	app := App{}
 
 	repo, err := storage.New(cfg)
 	if err != nil {
@@ -26,18 +26,22 @@ func New(cfg *config.Config, log *slog.Logger) *App {
 		os.Exit(1)
 	}
 
-	enr := enricher.New(cfg)
-	a.service = services.New(log, repo, enr)
-	a.router = router.New(echo.New(), a.service)
+	enricherSrv := enricher.New(cfg)
 
-	a.router.Route()
+	service := services.New(log, repo, enricherSrv)
 
-	return &a
+	app.r = router.New(service)
+
+	app.e = echo.New()
+
+	app.r.Route(app.e)
+
+	return &app
 }
 
 func (a *App) MustRun(host string) {
-	if err := a.router.Echo.Start(host); err != nil {
-		a.log.Error("can't start application", slog.String("[FATAL]", err.Error()))
+	if err := a.e.Start(host); err != nil {
+		a.l.Error("can't start application", slog.String("[FATAL]", err.Error()))
 		panic(err)
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/binaryty/enricher-service/internal/models"
-	"log"
 	"log/slog"
 )
 
@@ -45,9 +44,12 @@ func (s *Service) AddPerson(ctx context.Context, rawData models.RawPerson) (int6
 	const op = "services.people.AddPerson"
 	logger := s.log.With("operation", op)
 
+	logger.Info("attempting to enriched new person")
+
 	enrichResponse, err := s.enricher.Process(ctx, rawData)
-	log.Println(enrichResponse)
 	if err != nil {
+		logger.Warn("can't enriched person", slog.String("[ERROR]", err.Error()))
+
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -59,6 +61,8 @@ func (s *Service) AddPerson(ctx context.Context, rawData models.RawPerson) (int6
 		Gender:      enrichResponse.Gender,
 		Nationality: enrichResponse.Nationality,
 	}
+
+	logger.Info("attempting to add new person in storage")
 
 	id, err := s.personProvider.Create(ctx, person)
 	if err != nil {
@@ -78,22 +82,26 @@ func (s *Service) SelectByID(ctx context.Context, id int64) (*models.Person, err
 
 	logger := s.log.With("operation", op)
 
+	logger.Info("attempting to select person")
+
 	person, err := s.personProvider.SelectByID(ctx, id)
 	if err != nil {
-		logger.Debug("can't query person", slog.String("[ERROR]", err.Error()))
+		logger.Debug("can't select person", slog.String("[ERROR]", err.Error()))
 
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	logger.Debug("person find successfully")
+	logger.Debug("person find successfully", slog.Int64("id", person.ID))
 
 	return person, nil
 }
 
-// SelectAll ...
+// SelectAll get all persons from storage according parameters.
 func (s *Service) SelectAll(ctx context.Context, params models.Params) ([]models.Person, error) {
 	const op = "services.people.SelectAll"
 	logger := s.log.With("operation", op)
+
+	logger.Info("attempting to query persons")
 
 	persons, err := s.personProvider.SelectAll(ctx, params)
 	if err != nil {
@@ -112,10 +120,12 @@ func (s *Service) SelectAll(ctx context.Context, params models.Params) ([]models
 	return persons, nil
 }
 
-// DeleteByID ...
+// DeleteByID delete person from storage by ID.
 func (s *Service) DeleteByID(ctx context.Context, id int64) error {
 	const op = "services.person.DeleteByID"
 	logger := s.log.With("operation", op)
+
+	logger.Info("attempting to delete person")
 
 	if err := s.personProvider.DeleteByID(ctx, id); err != nil {
 		logger.Debug("can't delete person", slog.String("[ERROR]", err.Error()))
@@ -127,8 +137,20 @@ func (s *Service) DeleteByID(ctx context.Context, id int64) error {
 	return nil
 }
 
-// Update ...
+// Update updates person data in storage by params.
 func (s *Service) Update(ctx context.Context, params *models.Person) error {
+	const op = "services.person.Update"
+	logger := s.log.With("operation", op)
 
-	return s.personProvider.Update(ctx, params)
+	logger.Info("attempting to update person")
+
+	if err := s.personProvider.Update(ctx, params); err != nil {
+		logger.Debug("can't update person", slog.String("[ERROR]", err.Error()))
+
+		return err
+	}
+
+	logger.Debug("person successfully updated", slog.Int64("ID", params.ID))
+
+	return nil
 }

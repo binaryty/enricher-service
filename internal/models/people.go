@@ -17,6 +17,6 @@ type RawPerson struct {
 }
 
 type Params struct {
-	Limit  int `db:"limit" json:"limit"`
-	Offset int `db:"offset" json:"offset"`
+	Limit  int
+	Offset int
 }

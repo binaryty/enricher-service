@@ -4,8 +4,23 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
+	"log"
 	"os"
-	"time"
+)
+
+const (
+	DefaultEnv            = "local"
+	DefaultDBHost         = "localhost"
+	DefaultDBPort         = "5432"
+	DefaultDBUser         = "postgres"
+	DefaultDBPass         = "postgres"
+	DefaultDBName         = "people_db"
+	DefaultDBSSLMode      = "disable"
+	DefaultAgeAPI         = "https://api.agify.io"
+	DefaultGenderAPI      = "https://api.genderize.io"
+	DefaultNationalityAPI = "https://api.nationalize.io"
+	DefaultHTTPAddress    = "localhost:8082"
 )
 
 type Config struct {
@@ -21,9 +36,7 @@ type Config struct {
 }
 
 type HTTPServer struct {
-	Address     string        `yaml:"address" env-default:"localhost:8080"`
-	Timeout     time.Duration `yaml:"timeout" env-default:"4s"`
-	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
+	Address string `yaml:"address" env-default:"localhost:8080"`
 }
 
 type API struct {
@@ -32,7 +45,19 @@ type API struct {
 	Nationality string `yaml:"nationality"`
 }
 
-// MustLoad load config and panic if not set.
+// MakePGURL make a connection for postgres.
+func (c *Config) MakePGURL() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		c.DBUser,
+		c.DBPass,
+		c.DBHost,
+		c.DBPort,
+		c.DBName,
+		c.DBSSLMode,
+	)
+}
+
+// MustLoad load config from config file and panic if not set.
 func MustLoad() *Config {
 	path := fetchConfigPath()
 
@@ -40,7 +65,7 @@ func MustLoad() *Config {
 		panic("config path is empty")
 	}
 
-	return MustLoadByPath(path)
+	return MustLoadFromEnv()
 }
 
 // MustLoadByPath load config from path and panic if not set.
@@ -72,13 +97,34 @@ func fetchConfigPath() string {
 	return path
 }
 
-func (c *Config) MakePGURL() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		c.DBUser,
-		c.DBPass,
-		c.DBHost,
-		c.DBPort,
-		c.DBName,
-		c.DBSSLMode,
-	)
+func MustLoadFromEnv() *Config {
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf(".env file not founf")
+	}
+
+	return &Config{
+		Env:       getEnv("ENV", DefaultEnv),
+		DBHost:    getEnv("DB_HOST", DefaultDBHost),
+		DBPort:    getEnv("DB_PORT", DefaultDBPort),
+		DBUser:    getEnv("DB_USER", DefaultDBUser),
+		DBPass:    getEnv("DB_PASS", DefaultDBPass),
+		DBName:    getEnv("DB_NAME", DefaultDBName),
+		DBSSLMode: getEnv("DB_SSL_MODE", DefaultDBSSLMode),
+		API: API{
+			Age:         getEnv("AGE_API", DefaultAgeAPI),
+			Gender:      getEnv("GENDER_API", DefaultGenderAPI),
+			Nationality: getEnv("NATIONALITY_API", DefaultNationalityAPI),
+		},
+		HTTPServer: HTTPServer{
+			Address: getEnv("HTTP_HOST", DefaultHTTPAddress),
+		},
+	}
+}
+
+func getEnv(key string, defaultVal string) string {
+	if val, exist := os.LookupEnv(key); exist {
+		return val
+	}
+
+	return defaultVal
 }

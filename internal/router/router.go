@@ -7,6 +7,7 @@ import (
 	"github.com/binaryty/enricher-service/internal/response"
 	"github.com/binaryty/enricher-service/internal/storage"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"net/http"
 	"strconv"
 )
@@ -20,14 +21,14 @@ type PeopleService interface {
 }
 
 type Router struct {
-	echo    *echo.Echo
+	Echo    *echo.Echo
 	service PeopleService
 }
 
 // New returns a new instance of Router.
 func New(echo *echo.Echo, service PeopleService) *Router {
 	return &Router{
-		echo:    echo,
+		Echo:    echo,
 		service: service,
 	}
 }
@@ -70,15 +71,43 @@ func (r *Router) SelectByID(c echo.Context) error {
 }
 
 // Update ...
-func (r *Router) Update(ctx context.Context, params *models.Person) error {
-	// TODO: implement me
-	panic("implement me")
+func (r *Router) Update(c echo.Context) error {
+	req := models.Person{}
+
+	if err := c.Bind(&req); err != nil {
+		return response.BadRequest(c, err)
+	}
+
+	if err := r.service.Update(c.Request().Context(), &req); err != nil {
+		return response.InternalServerError(c, err)
+	}
+
+	return response.Success(c, response.IDResponse{ID: req.ID})
 }
 
 // SelectAll ...
-func (r *Router) SelectAll(ctx context.Context, params models.Params) ([]models.Person, error) {
-	// TODO: implement me
-	panic("implement me")
+func (r *Router) SelectAll(c echo.Context) error {
+	limit, err := strconv.Atoi(c.QueryParam("limit"))
+	if err != nil {
+		return response.BadRequest(c, err)
+	}
+
+	offset, err := strconv.Atoi(c.QueryParam("offset"))
+	if err != nil {
+		return response.BadRequest(c, err)
+	}
+
+	params := models.Params{
+		Limit:  limit,
+		Offset: offset,
+	}
+
+	persons, err := r.service.SelectAll(c.Request().Context(), params)
+	if err != nil {
+		return response.InternalServerError(c, err)
+	}
+
+	return response.Success(c, persons)
 }
 
 // DeleteByID ...
@@ -96,4 +125,14 @@ func (r *Router) DeleteByID(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusNoContent, nil)
+}
+
+func (r *Router) Route() {
+	r.Echo.Use(middleware.Recover())
+
+	r.Echo.POST("/people", r.AddPerson)
+	r.Echo.GET("people", r.SelectAll)
+	r.Echo.GET("/people/:id", r.SelectByID)
+	r.Echo.DELETE("/people/:id", r.DeleteByID)
+	r.Echo.PUT("/people", r.Update)
 }

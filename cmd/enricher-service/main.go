@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"github.com/binaryty/enricher-service/internal/app"
 	"github.com/binaryty/enricher-service/internal/config"
 	"log/slog"
 	"os"
+	"os/signal"
+	"time"
 )
 
 const (
@@ -14,19 +17,29 @@ const (
 )
 
 func main() {
-	// init config
 	cfg := config.MustLoad()
 
-	// init logger
 	logger := setupLogger(cfg.Env)
 	logger.Info("start logging")
 
-	// init app
 	a := app.New(cfg, logger)
 
-	// start app
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	logger.Info("starting application", slog.String("host", cfg.HTTPServer.Address))
-	a.MustRun(cfg.HTTPServer.Address)
+
+	go func() {
+		a.MustRun(cfg.HTTPServer.Address)
+	}()
+
+	<-ctx.Done()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	a.Stop(ctx)
+
+	logger.Info("application stopped")
 }
 
 // setupLogger ...

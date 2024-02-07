@@ -41,3 +41,7 @@ func NotFound(c echo.Context, data interface{}) error {
 func SuccessfullyCreated(c echo.Context, data interface{}) error {
 	return c.JSON(http.StatusCreated, data)
 }
+
+func Success(c echo.Context, data interface{}) error {
+	return c.JSON(http.StatusOK, data)
+}

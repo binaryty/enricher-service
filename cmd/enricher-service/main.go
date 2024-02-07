@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/binaryty/enricher-service/internal/app"
 	"github.com/binaryty/enricher-service/internal/config"
 	"log/slog"
 	"os"
@@ -20,25 +21,26 @@ func main() {
 	logger := setupLogger(cfg.Env)
 	logger.Info("start logging")
 
-	// TODO: init storage
+	// init app
+	a := app.New(cfg, logger)
 
-	// TODO: init router
-
-	// TODO: run server
+	// start app
+	logger.Info("starting application", slog.String("host", cfg.HTTPServer.Address))
+	a.MustRun(cfg.HTTPServer.Address)
 }
 
 // setupLogger ...
 func setupLogger(env string) *slog.Logger {
-	var log *slog.Logger
+	var logger *slog.Logger
 
 	switch env {
 	case envLocal:
-		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+		logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	case envDev:
-		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+		logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	case envProd:
-		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+		logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	}
 
-	return log
+	return logger
 }

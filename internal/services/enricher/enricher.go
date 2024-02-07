@@ -9,6 +9,7 @@ import (
 	"github.com/binaryty/enricher-service/internal/models"
 	"github.com/binaryty/enricher-service/internal/response"
 	"net/http"
+	"sync"
 )
 
 var (
@@ -36,30 +37,77 @@ func New(cfg *config.Config) *Enricher {
 
 // Process processing enrich raw data.
 func (e *Enricher) Process(ctx context.Context, rawData models.RawPerson) (*models.Person, error) {
+	errCh := make(chan error)
+	resCh := make(chan *models.Person)
 
-	ageResp, err := e.handleAge(ctx, rawData.Name)
-	if err != nil {
+	handleCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	go func() {
+		defer close(errCh)
+		defer close(resCh)
+
+		var (
+			wg              sync.WaitGroup
+			ageResp         *response.AgeResponse
+			genderResp      *response.GenderResponse
+			nationalityResp *response.NationalityResponse
+			err             error
+		)
+
+		wg.Add(3)
+
+		go func() {
+			defer wg.Done()
+
+			ageResp, err = e.handleAge(handleCtx, rawData.Name)
+			if err != nil {
+				errCh <- err
+				return
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+
+			genderResp, err = e.handleGender(handleCtx, rawData.Name)
+			if err != nil {
+				errCh <- err
+				return
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+
+			nationalityResp, err = e.handleNationality(handleCtx, rawData.Name)
+			if err != nil {
+				errCh <- err
+				return
+			}
+		}()
+
+		wg.Wait()
+		if ageResp != nil && genderResp != nil && nationalityResp != nil {
+			resCh <- &models.Person{
+				Name:        rawData.Name,
+				Surname:     rawData.Surname,
+				Patronymic:  rawData.Patronymic,
+				Age:         ageResp.Age,
+				Gender:      genderResp.Gender,
+				Nationality: nationalityResp.CountryID,
+			}
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, fmt.Errorf("the timeout has expired")
+	case err := <-errCh:
 		return nil, err
+	case enrichData := <-resCh:
+		return enrichData, nil
 	}
-
-	genderResp, err := e.handleGender(ctx, rawData.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	nationalityResp, err := e.handleNationality(ctx, rawData.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.Person{
-		Name:        rawData.Name,
-		Surname:     rawData.Surname,
-		Patronymic:  rawData.Patronymic,
-		Age:         ageResp.Age,
-		Gender:      genderResp.Gender,
-		Nationality: nationalityResp.CountryID,
-	}, nil
 }
 
 // handleAge get age from public API.

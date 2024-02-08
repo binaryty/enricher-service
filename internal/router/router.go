@@ -8,6 +8,7 @@ import (
 	"github.com/binaryty/enricher-service/internal/storage"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"net/http"
 	"strconv"
 
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -17,12 +18,12 @@ import (
 const (
 	PageSize = 10
 
-	StatusOk                 = "Ok"
-	StatusSuccess            = "Success"
-	StatusSuccessfullyCrated = "Successfully Created"
-	StatusInternal           = "Internal Error"
-	StatusBadRequest         = "Bad Request"
-	StatusNotFound           = "Not Found"
+	StatusOk         = "Ok"
+	StatusCrated     = "Successfully Created"
+	StatusInternal   = "Internal Error"
+	StatusBadRequest = "Bad Request"
+	StatusNotFound   = "Not Found"
+	StatusNoContent  = "No Content"
 )
 
 type PeopleService interface {
@@ -60,16 +61,16 @@ func (r *Router) AddPerson(c echo.Context) error {
 	req := models.RawPerson{}
 
 	if err := c.Bind(&req); err != nil {
-		return response.BadRequest(c, StatusBadRequest, err)
+		return response.SendResponse(c, http.StatusBadRequest, StatusBadRequest, err)
 	}
 
 	id, err := r.service.AddPerson(c.Request().Context(), req)
 
 	if err != nil {
-		return response.InternalServerError(c, StatusInternal, err)
+		return response.SendResponse(c, http.StatusInternalServerError, StatusInternal, err)
 	}
 
-	return response.SuccessfullyCreated(c, StatusSuccessfullyCrated, response.IDResponse{
+	return response.SendResponse(c, http.StatusCreated, StatusCrated, response.IDResponse{
 		ID: id,
 	})
 }
@@ -88,18 +89,18 @@ func (r *Router) AddPerson(c echo.Context) error {
 func (r *Router) SelectByID(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return response.BadRequest(c, StatusBadRequest, err)
+		return response.SendResponse(c, http.StatusBadRequest, StatusBadRequest, err)
 	}
 
 	person, err := r.service.SelectByID(c.Request().Context(), int64(id))
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return response.NotFound(c, StatusNotFound, err)
+			return response.SendResponse(c, http.StatusNotFound, StatusNotFound, err)
 		}
-		return response.InternalServerError(c, StatusInternal, err)
+		return response.SendResponse(c, http.StatusInternalServerError, StatusInternal, err)
 	}
 
-	return response.Success(c, StatusSuccess, person)
+	return response.SendResponse(c, http.StatusOK, StatusOk, person)
 }
 
 // Update godoc
@@ -113,19 +114,19 @@ func (r *Router) SelectByID(c echo.Context) error {
 //	@Param			input	body		models.Person	true	"id, name, surname, patronymic, age, gender, nationality"
 //	@Success		200		{object}	response.Response
 //	@Failure		400		{object}	response.Response
-//	@Router			/person [patch]
+//	@Router			/person [put]
 func (r *Router) Update(c echo.Context) error {
 	req := models.Person{}
 
 	if err := c.Bind(&req); err != nil {
-		return response.BadRequest(c, StatusBadRequest, err)
+		return response.SendResponse(c, http.StatusBadRequest, StatusBadRequest, err)
 	}
 
 	if err := r.service.Update(c.Request().Context(), &req); err != nil {
-		return response.InternalServerError(c, StatusInternal, err)
+		return response.SendResponse(c, http.StatusInternalServerError, StatusInternal, err)
 	}
 
-	return response.Success(c, StatusSuccess, response.IDResponse{
+	return response.SendResponse(c, http.StatusOK, StatusOk, response.IDResponse{
 		ID: req.ID,
 	})
 }
@@ -138,14 +139,14 @@ func (r *Router) Update(c echo.Context) error {
 //	@ID				get-all-persons
 //	@Accept			json
 //	@Produce		json
-//	@Param			pageId	query		int	true	"Id of page of results"
+//	@Param			page	query		int	true	"Id of page of results"
 //	@Success		200		{object}	response.Response
 //	@Failure		400		{object}	response.Response
 //	@Router			/persons [get]
 func (r *Router) SelectAll(c echo.Context) error {
 	pageId, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil {
-		return response.BadRequest(c, StatusBadRequest, err)
+		return response.SendResponse(c, http.StatusBadRequest, StatusBadRequest, err)
 	}
 
 	params := models.Params{
@@ -155,10 +156,10 @@ func (r *Router) SelectAll(c echo.Context) error {
 
 	persons, err := r.service.SelectAll(c.Request().Context(), params)
 	if err != nil {
-		return response.InternalServerError(c, StatusInternal, err)
+		return response.SendResponse(c, http.StatusInternalServerError, StatusInternal, err)
 	}
 
-	return response.Success(c, StatusSuccess, persons)
+	return response.SendResponse(c, http.StatusOK, StatusOk, persons)
 }
 
 // DeleteByID godoc
@@ -170,27 +171,23 @@ func (r *Router) SelectAll(c echo.Context) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			id	path		int	true	"Person ID"
-//	@Success		200	{object}	response.Response
+//	@Success		204	{object}	response.Response
 //	@Failure		400	{object}	response.Response
-//	@Router			/person{id} [delete]
+//	@Router			/person/{id} [delete]
 func (r *Router) DeleteByID(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return response.BadRequest(c, StatusBadRequest, err)
+		return response.SendResponse(c, http.StatusBadRequest, StatusBadRequest, err)
 	}
 	if err := r.service.DeleteByID(c.Request().Context(), int64(id)); err != nil {
-		if errors.Is(err, storage.ErrNotFound) {
-			return response.NotFound(c, StatusNotFound, err)
-		}
 
-		return response.InternalServerError(c, StatusInternal, err)
+		return response.SendResponse(c, http.StatusInternalServerError, StatusInternal, err)
 	}
 
-	return response.Success(c, StatusOk, response.IDResponse{
-		ID: int64(id),
-	})
+	return response.SendResponse(c, http.StatusNoContent, StatusNoContent, nil)
 }
 
+// Route setup router.
 func (r *Router) Route(e *echo.Echo) {
 	e.Use(middleware.Recover())
 

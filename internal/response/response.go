@@ -2,7 +2,6 @@ package response
 
 import (
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 type AgeResponse struct {
@@ -32,41 +31,9 @@ type Response struct {
 	Data   interface{} `json:"data,omitempty"`
 }
 
-func BadRequest(c echo.Context, status string, data interface{}) error {
-	return c.JSON(http.StatusBadRequest, Response{
-		Code:   http.StatusBadRequest,
-		Status: status,
-		Data:   data,
-	})
-}
-
-func InternalServerError(c echo.Context, status string, data interface{}) error {
-	return c.JSON(http.StatusInternalServerError, Response{
-		Code:   http.StatusInternalServerError,
-		Status: status,
-		Data:   data,
-	})
-}
-
-func NotFound(c echo.Context, status string, data interface{}) error {
-	return c.JSON(http.StatusNotFound, Response{
-		Code:   http.StatusNotFound,
-		Status: status,
-		Data:   data,
-	})
-}
-
-func SuccessfullyCreated(c echo.Context, status string, data interface{}) error {
-	return c.JSON(http.StatusCreated, Response{
-		Code:   http.StatusCreated,
-		Status: status,
-		Data:   data,
-	})
-}
-
-func Success(c echo.Context, status string, data interface{}) error {
-	return c.JSON(http.StatusOK, Response{
-		Code:   http.StatusOK,
+func SendResponse(c echo.Context, code int, status string, data interface{}) error {
+	return c.JSON(code, Response{
+		Code:   code,
 		Status: status,
 		Data:   data,
 	})

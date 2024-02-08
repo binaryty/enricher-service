@@ -16,6 +16,17 @@ const (
 	envProd  = "prod"
 )
 
+//	@title			Enricher Service Swagger API
+//	@version		1.0
+//	@description	Swagger API for Golang Project Enricher Service.
+
+//	@contact.name	Pavel Timochovich
+//	@contact.email	t1m0kh0v14@gmail.com
+
+//	@host		localhost:8082
+//	@BasePath	/api/v1
+
+// @BasePath	/api/v1
 func main() {
 	cfg := config.MustLoad()
 

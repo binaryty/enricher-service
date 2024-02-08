@@ -8,8 +8,21 @@ import (
 	"github.com/binaryty/enricher-service/internal/storage"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"net/http"
 	"strconv"
+
+	echoSwagger "github.com/swaggo/echo-swagger"
+	_ "github.com/swaggo/echo-swagger/example/docs"
+)
+
+const (
+	PageSize = 10
+
+	StatusOk                 = "Ok"
+	StatusSuccess            = "Success"
+	StatusSuccessfullyCrated = "Successfully Created"
+	StatusInternal           = "Internal Error"
+	StatusBadRequest         = "Bad Request"
+	StatusNotFound           = "Not Found"
 )
 
 type PeopleService interface {
@@ -31,106 +44,161 @@ func New(service PeopleService) *Router {
 	}
 }
 
-// AddPerson ...
+// AddPerson godoc
+//
+//	@Summary		Add Person
+//	@Tags			person
+//	@Description	get NSP to enrich it and add
+//	@ID				add-person
+//	@Accept			json
+//	@Produce		json
+//	@Param			RawPerson	body		models.RawPerson	true	"name, surname, patronymic"
+//	@Success		201			{object}	response.Response
+//	@Failure		400			{object}	response.Response
+//	@Router			/person [post]
 func (r *Router) AddPerson(c echo.Context) error {
 	req := models.RawPerson{}
 
 	if err := c.Bind(&req); err != nil {
-		return response.BadRequest(c, err)
+		return response.BadRequest(c, StatusBadRequest, err)
 	}
 
 	id, err := r.service.AddPerson(c.Request().Context(), req)
 
 	if err != nil {
-		return response.InternalServerError(c, err)
+		return response.InternalServerError(c, StatusInternal, err)
 	}
 
-	return response.SuccessfullyCreated(c, response.IDResponse{
+	return response.SuccessfullyCreated(c, StatusSuccessfullyCrated, response.IDResponse{
 		ID: id,
 	})
 }
 
-// SelectByID ...
+// SelectByID godoc
+//
+//	@Summary		Get person by id from storage
+//	@Tags			person
+//	@Description	get id from url params and find person
+//	@ID				get-person
+//	@Produce		json
+//	@Param			id	path		int	true	"Person ID"
+//	@Success		200	{object}	models.Person
+//	@Failure		400	{object}	response.Response
+//	@Router			/person/{id} [get]
 func (r *Router) SelectByID(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return response.BadRequest(c, err)
+		return response.BadRequest(c, StatusBadRequest, err)
 	}
 
 	person, err := r.service.SelectByID(c.Request().Context(), int64(id))
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return response.NotFound(c, err)
+			return response.NotFound(c, StatusNotFound, err)
 		}
-		return response.InternalServerError(c, err)
+		return response.InternalServerError(c, StatusInternal, err)
 	}
 
-	return c.JSON(http.StatusOK, person)
+	return response.Success(c, StatusSuccess, person)
 }
 
-// Update ...
+// Update godoc
+//
+//	@Summary		Update person in storage
+//	@Tags			person
+//	@Description	update person
+//	@ID				update-person
+//	@Accept			json
+//	@Produce		json
+//	@Param			input	body		models.Person	true	"id, name, surname, patronymic, age, gender, nationality"
+//	@Success		200		{object}	response.Response
+//	@Failure		400		{object}	response.Response
+//	@Router			/person [patch]
 func (r *Router) Update(c echo.Context) error {
 	req := models.Person{}
 
 	if err := c.Bind(&req); err != nil {
-		return response.BadRequest(c, err)
+		return response.BadRequest(c, StatusBadRequest, err)
 	}
 
 	if err := r.service.Update(c.Request().Context(), &req); err != nil {
-		return response.InternalServerError(c, err)
+		return response.InternalServerError(c, StatusInternal, err)
 	}
 
-	return response.Success(c, response.IDResponse{ID: req.ID})
+	return response.Success(c, StatusSuccess, response.IDResponse{
+		ID: req.ID,
+	})
 }
 
-// SelectAll ...
+// SelectAll godoc
+//
+//	@Summary		Get a list of persons by params
+//	@Tags			person
+//	@Description	Get a list of persons based on query parameters
+//	@ID				get-all-persons
+//	@Accept			json
+//	@Produce		json
+//	@Param			pageId	query		int	true	"Id of page of results"
+//	@Success		200		{object}	response.Response
+//	@Failure		400		{object}	response.Response
+//	@Router			/persons [get]
 func (r *Router) SelectAll(c echo.Context) error {
-	limit, err := strconv.Atoi(c.QueryParam("limit"))
+	pageId, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil {
-		return response.BadRequest(c, err)
-	}
-
-	offset, err := strconv.Atoi(c.QueryParam("offset"))
-	if err != nil {
-		return response.BadRequest(c, err)
+		return response.BadRequest(c, StatusBadRequest, err)
 	}
 
 	params := models.Params{
-		Limit:  limit,
-		Offset: offset,
+		Limit:  PageSize,
+		Offset: (pageId - 1) * PageSize,
 	}
 
 	persons, err := r.service.SelectAll(c.Request().Context(), params)
 	if err != nil {
-		return response.InternalServerError(c, err)
+		return response.InternalServerError(c, StatusInternal, err)
 	}
 
-	return response.Success(c, persons)
+	return response.Success(c, StatusSuccess, persons)
 }
 
-// DeleteByID ...
+// DeleteByID godoc
+//
+//	@Summary		delete person from storage by id
+//	@Tags			person
+//	@Description	delete person
+//	@ID				delete-person
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int	true	"Person ID"
+//	@Success		200	{object}	response.Response
+//	@Failure		400	{object}	response.Response
+//	@Router			/person{id} [delete]
 func (r *Router) DeleteByID(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return response.BadRequest(c, err)
+		return response.BadRequest(c, StatusBadRequest, err)
 	}
 	if err := r.service.DeleteByID(c.Request().Context(), int64(id)); err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return response.NotFound(c, err)
+			return response.NotFound(c, StatusNotFound, err)
 		}
 
-		return response.InternalServerError(c, err)
+		return response.InternalServerError(c, StatusInternal, err)
 	}
 
-	return c.JSON(http.StatusNoContent, nil)
+	return response.Success(c, StatusOk, response.IDResponse{
+		ID: int64(id),
+	})
 }
 
 func (r *Router) Route(e *echo.Echo) {
 	e.Use(middleware.Recover())
 
-	e.POST("/people", r.AddPerson)
-	e.GET("people", r.SelectAll)
-	e.GET("/people/:id", r.SelectByID)
-	e.DELETE("/people/:id", r.DeleteByID)
-	e.PUT("/people", r.Update)
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+
+	e.POST("/person", r.AddPerson)
+	e.GET("/persons", r.SelectAll)
+	e.GET("/person/:id", r.SelectByID)
+	e.DELETE("/person/:id", r.DeleteByID)
+	e.PUT("/person", r.Update)
 }

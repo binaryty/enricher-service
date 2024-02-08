@@ -26,22 +26,48 @@ type IDResponse struct {
 	ID int64 `json:"id"`
 }
 
-func BadRequest(c echo.Context, data interface{}) error {
-	return c.JSON(http.StatusBadRequest, data)
+type Response struct {
+	Code   int         `json:"code"`
+	Status string      `json:"status"`
+	Data   interface{} `json:"data,omitempty"`
 }
 
-func InternalServerError(c echo.Context, data interface{}) error {
-	return c.JSON(http.StatusInternalServerError, data)
+func BadRequest(c echo.Context, status string, data interface{}) error {
+	return c.JSON(http.StatusBadRequest, Response{
+		Code:   http.StatusBadRequest,
+		Status: status,
+		Data:   data,
+	})
 }
 
-func NotFound(c echo.Context, data interface{}) error {
-	return c.JSON(http.StatusNotFound, data)
+func InternalServerError(c echo.Context, status string, data interface{}) error {
+	return c.JSON(http.StatusInternalServerError, Response{
+		Code:   http.StatusInternalServerError,
+		Status: status,
+		Data:   data,
+	})
 }
 
-func SuccessfullyCreated(c echo.Context, data interface{}) error {
-	return c.JSON(http.StatusCreated, data)
+func NotFound(c echo.Context, status string, data interface{}) error {
+	return c.JSON(http.StatusNotFound, Response{
+		Code:   http.StatusNotFound,
+		Status: status,
+		Data:   data,
+	})
 }
 
-func Success(c echo.Context, data interface{}) error {
-	return c.JSON(http.StatusOK, data)
+func SuccessfullyCreated(c echo.Context, status string, data interface{}) error {
+	return c.JSON(http.StatusCreated, Response{
+		Code:   http.StatusCreated,
+		Status: status,
+		Data:   data,
+	})
+}
+
+func Success(c echo.Context, status string, data interface{}) error {
+	return c.JSON(http.StatusOK, Response{
+		Code:   http.StatusOK,
+		Status: status,
+		Data:   data,
+	})
 }

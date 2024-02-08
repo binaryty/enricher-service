@@ -1,0 +1,175 @@
+basePath: /api/v1
+definitions:
+  models.Person:
+    properties:
+      age:
+        type: integer
+      gender:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      nationality:
+        type: string
+      patronymic:
+        type: string
+      surname:
+        type: string
+    type: object
+  models.RawPerson:
+    properties:
+      name:
+        type: string
+      patronymic:
+        type: string
+      surname:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      status:
+        type: string
+    type: object
+host: localhost:8082
+info:
+  contact:
+    email: t1m0kh0v14@gmail.com
+    name: Pavel Timochovich
+  description: Swagger API for Golang Project Enricher Service.
+  title: Enricher Service Swagger API
+  version: "1.0"
+paths:
+  /person:
+    patch:
+      consumes:
+      - application/json
+      description: update person
+      operationId: update-person
+      parameters:
+      - description: id, name, surname, patronymic, age, gender, nationality
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.Person'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update person in storage
+      tags:
+      - person
+    post:
+      consumes:
+      - application/json
+      description: get NSP to enrich it and add
+      operationId: add-person
+      parameters:
+      - description: name, surname, patronymic
+        in: body
+        name: RawPerson
+        required: true
+        schema:
+          $ref: '#/definitions/models.RawPerson'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Add Person
+      tags:
+      - person
+  /person/{id}:
+    get:
+      description: get id from url params and find person
+      operationId: get-person
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Person'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get person by id from storage
+      tags:
+      - person
+  /person{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete person
+      operationId: delete-person
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: delete person from storage by id
+      tags:
+      - person
+  /persons:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of persons based on query parameters
+      operationId: get-all-persons
+      parameters:
+      - description: Id of page of results
+        in: query
+        name: pageId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get a list of persons by params
+      tags:
+      - person
+swagger: "2.0"

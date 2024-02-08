@@ -19,14 +19,16 @@ const (
 //	@title			Enricher Service Swagger API
 //	@version		1.0
 //	@description	Swagger API for Golang Project Enricher Service.
+//	@termsOfService	http://swagger.io/terms/
 
 //	@contact.name	Pavel Timochovich
 //	@contact.email	t1m0kh0v14@gmail.com
 
-//	@host		localhost:8082
-//	@BasePath	/api/v1
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @BasePath	/api/v1
+// @host		localhost:8082
+// @BasePath	/
 func main() {
 	cfg := config.MustLoad()
 

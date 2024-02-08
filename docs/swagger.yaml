@@ -1,29 +1,39 @@
-basePath: /api/v1
+basePath: /
 definitions:
   models.Person:
     properties:
       age:
+        example: 45
         type: integer
       gender:
+        example: male
         type: string
       id:
+        example: 11
         type: integer
       name:
+        example: Ivan
         type: string
       nationality:
+        example: RU
         type: string
       patronymic:
+        example: Ivanovich
         type: string
       surname:
+        example: Ivanov
         type: string
     type: object
   models.RawPerson:
     properties:
       name:
+        example: Petr
         type: string
       patronymic:
+        example: Petrovich
         type: string
       surname:
+        example: Petrov
         type: string
     type: object
   response.Response:
@@ -40,36 +50,14 @@ info:
     email: t1m0kh0v14@gmail.com
     name: Pavel Timochovich
   description: Swagger API for Golang Project Enricher Service.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
   title: Enricher Service Swagger API
   version: "1.0"
 paths:
   /person:
-    patch:
-      consumes:
-      - application/json
-      description: update person
-      operationId: update-person
-      parameters:
-      - description: id, name, surname, patronymic, age, gender, nationality
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/models.Person'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Update person in storage
-      tags:
-      - person
     post:
       consumes:
       - application/json
@@ -96,31 +84,33 @@ paths:
       summary: Add Person
       tags:
       - person
-  /person/{id}:
-    get:
-      description: get id from url params and find person
-      operationId: get-person
+    put:
+      consumes:
+      - application/json
+      description: update person
+      operationId: update-person
       parameters:
-      - description: Person ID
-        in: path
-        name: id
+      - description: id, name, surname, patronymic, age, gender, nationality
+        in: body
+        name: input
         required: true
-        type: integer
+        schema:
+          $ref: '#/definitions/models.Person'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Person'
+            $ref: '#/definitions/response.Response'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Get person by id from storage
+      summary: Update person in storage
       tags:
       - person
-  /person{id}:
+  /person/{id}:
     delete:
       consumes:
       - application/json
@@ -146,6 +136,29 @@ paths:
       summary: delete person from storage by id
       tags:
       - person
+    get:
+      description: get id from url params and find person
+      operationId: get-person
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Person'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get person by id from storage
+      tags:
+      - person
   /persons:
     get:
       consumes:
@@ -155,7 +168,7 @@ paths:
       parameters:
       - description: Id of page of results
         in: query
-        name: pageId
+        name: page
         required: true
         type: integer
       produces:

@@ -9,9 +9,14 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
+        "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "Pavel Timochovich",
             "email": "t1m0kh0v14@gmail.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
         "version": "{{.Version}}"
     },
@@ -19,6 +24,45 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/person": {
+            "put": {
+                "description": "update person",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "person"
+                ],
+                "summary": "Update person in storage",
+                "operationId": "update-person",
+                "parameters": [
+                    {
+                        "description": "id, name, surname, patronymic, age, gender, nationality",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Person"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "get NSP to enrich it and add",
                 "consumes": [
@@ -46,45 +90,6 @@ const docTemplate = `{
                 "responses": {
                     "201": {
                         "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "description": "update person",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "person"
-                ],
-                "summary": "Update person in storage",
-                "operationId": "update-person",
-                "parameters": [
-                    {
-                        "description": "id, name, surname, patronymic, age, gender, nationality",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Person"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -132,48 +137,7 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/persons": {
-            "get": {
-                "description": "Get a list of persons based on query parameters",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "person"
-                ],
-                "summary": "Get a list of persons by params",
-                "operationId": "get-all-persons",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Id of page of results",
-                        "name": "pageId",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/person{id}": {
+            },
             "delete": {
                 "description": "delete person",
                 "consumes": [
@@ -211,6 +175,45 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/persons": {
+            "get": {
+                "description": "Get a list of persons based on query parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "person"
+                ],
+                "summary": "Get a list of persons by params",
+                "operationId": "get-all-persons",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Id of page of results",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -218,25 +221,32 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "age": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 45
                 },
                 "gender": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "male"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 11
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Ivan"
                 },
                 "nationality": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "RU"
                 },
                 "patronymic": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Ivanovich"
                 },
                 "surname": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Ivanov"
                 }
             }
         },
@@ -244,13 +254,16 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Petr"
                 },
                 "patronymic": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Petrovich"
                 },
                 "surname": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Petrov"
                 }
             }
         },
@@ -273,7 +286,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8082",
-	BasePath:         "/api/v1",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Enricher Service Swagger API",
 	Description:      "Swagger API for Golang Project Enricher Service.",

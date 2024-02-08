@@ -8,6 +8,10 @@
     # Run
     run:
       cmds:
+        - go run ./...
+    # Run with config file
+    run-config:
+      cmds:
         - go run ./... --config=./config/local.yaml
     # Storage Up
     storage-up:

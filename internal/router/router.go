@@ -123,6 +123,9 @@ func (r *Router) Update(c echo.Context) error {
 	}
 
 	if err := r.service.Update(c.Request().Context(), &req); err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return response.SendResponse(c, http.StatusNotFound, StatusNotFound, err)
+		}
 		return response.SendResponse(c, http.StatusInternalServerError, StatusInternal, err)
 	}
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/binaryty/enricher-service/internal/models"
+	"github.com/mattn/go-sqlite3"
 	"log/slog"
 )
 
@@ -145,6 +146,12 @@ func (s *Service) Update(ctx context.Context, params *models.Person) error {
 	logger.Info("attempting to update person")
 
 	if err := s.personProvider.Update(ctx, params); err != nil {
+		if errors.Is(err, sqlite3.ErrNotFound) {
+			logger.Debug("can't find person", slog.String("[ERROR]", err.Error()))
+
+			return ErrPersonNotFound
+		}
+
 		logger.Debug("can't update person", slog.String("[ERROR]", err.Error()))
 
 		return err
